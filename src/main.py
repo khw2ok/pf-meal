@@ -1,5 +1,5 @@
-from flask import Flask, request
-app = Flask(__name__)
+from flask import Blueprint, request
+app = Blueprint("meal", __name__, url_prefix="/meal")
 
 from datetime import datetime, timedelta
 import dotenv
@@ -7,16 +7,6 @@ dotenv.load_dotenv()
 
 import json
 data = json.load(open("src/data.json", encoding="UTF-8"))
-defaultData = {
-  "schoolId": [None, None],
-  "schoolFav": [],
-  "mealFav": [],
-  "settings": {
-    "allergicMeal": False,
-    "notifMeal": False
-  },
-  "usage": 12
-}
 daysData = ["월", "화", "수", "목", "금", "토", "일"]
 
 import os
@@ -31,31 +21,50 @@ class reqOrg:
     self.clientExtra:dict = req["action"]["clientExtra"]
 
 class regularMealRes:
-  def __init__(self, req:dict, dt:datetime):
+  def __init__(self, req:dict, dt:datetime, days:str|None=None):
     mealData = json.loads(requests.get(f"https://open.neis.go.kr/hub/mealServiceDietInfo?KEY={os.environ['NEIS_KEY']}&Type=json&ATPT_OFCDC_SC_CODE={data[reqOrg(req).uid]['schoolId'][0]}&SD_SCHUL_CODE={data[reqOrg(req).uid]['schoolId'][1]}&MLSV_YMD={changeDateFmt(dt)}").text)
     if "mealServiceDietInfo" in mealData:
       mealDataPrs = re.sub("[0-9#.]+", "", (mealData["mealServiceDietInfo"][1]["row"][0]["DDISH_NM"]).replace("<br/>", "\n")).replace("()", "")
     else:
       mealDataPrs = "급식 데이터가 없습니다."
-    self.meal = {
-      "version": "2.0",
-      "template": {
-        "outputs": [
-          {
-            "basicCard": {
-              "title": f"{dt.year}년 {dt.month}월 {dt.day}일 {daysData[datetime(dt.year, dt.month, dt.day).weekday()]}요일",
-              "description": f"{mealDataPrs}",
-              "thumbnail": {
-                "imageUrl": ""
+    if days == None:
+      self.meal = {
+        "version": "2.0",
+        "template": {
+          "outputs": [
+            {
+              "basicCard": {
+                "title": f"{dt.year}년 {dt.month}월 {dt.day}일 {daysData[datetime(dt.year, dt.month, dt.day).weekday()]}요일",
+                "description": mealDataPrs,
+                "thumbnail": {
+                  "imageUrl": ""
+                }
               }
             }
-          }
-        ],
-        "quickReplies": []
+          ],
+          "quickReplies": []
+        }
       }
-    }
+    else:
+      self.meal = {
+        "version": "2.0",
+        "template": {
+          "outputs": [
+            {
+              "basicCard": {
+                "title": f"{dt.year}년 {dt.month}월 {dt.day}일 {daysData[datetime(dt.year, dt.month, dt.day).weekday()]}요일 ({days})",
+                "description": mealDataPrs,
+                "thumbnail": {
+                  "imageUrl": ""
+                }
+              }
+            }
+          ],
+          "quickReplies": []
+        }
+      }
 
-class carouselMealRes:
+class carouselMealRes:  
   def __init__(self, req:dict, dt:list):
     self.meal = {
       "version": "2.0",
@@ -71,19 +80,68 @@ class carouselMealRes:
         "quickReplies": []
       }
     }
+    for i in dt:
+      mealData = json.loads(requests.get(f"https://open.neis.go.kr/hub/mealServiceDietInfo?KEY={os.environ['NEIS_KEY']}&Type=json&ATPT_OFCDC_SC_CODE={data[reqOrg(req).uid]['schoolId'][0]}&SD_SCHUL_CODE={data[reqOrg(req).uid]['schoolId'][1]}&MLSV_YMD={changeDateFmt(i)}").text)
+      # ! print((f'{mealData}').replace("'", "\""))
+      if "mealServiceDietInfo" in mealData:
+        mealDataPrs = re.sub("[0-9#.]+", "", (mealData["mealServiceDietInfo"][1]["row"][0]["DDISH_NM"]).replace("<br/>", "\n")).replace("()", "")
+      else:
+        mealDataPrs = "급식 데이터가 없습니다."
+      (self.meal["template"]["outputs"][0]["carousel"]["items"]).append({
+        "title": f"{i.year}년 {i.month}월 {i.day}일 {daysData[datetime(i.year, i.month, i.day).weekday()]}요일",
+        "description": mealDataPrs,
+        "thumbnail": {
+          "imageUrl": ""
+        }
+      })
 
-def isUserInData(uid:str):
-  data = json.load(open("src/data.json", encoding="UTF-8"))
-  if not uid in data:
-    data[uid] = defaultData
+def isUserInData(req:dict):
+  # ! print(f"A : {type(reqOrg(req).uid)} {reqOrg(req).uid}")
+  if not reqOrg(req).uid in data:
+    # ! print("B")
+    data[reqOrg(req).uid] = {
+      "schoolId": [None, None],
+      "schoolFav": [],
+      "mealFav": [],
+      "settings": {
+        "allergicMeal": False,
+        "notifMeal": False
+      },
+      "usage": 0
+    }
     json.dump(data, open("src/data.json", "w", encoding="UTF-8"), indent=2)
-    data = json.load(open("src/data.json", encoding="UTF-8"))
 
 def addUserUsage(uid:str):
   return ""
 
+def bool8Time()->bool:
+  """현재 시간이 18시를 지났다면 True 리턴"""
+  if datetime.now().hour >= 18:
+    return True
+  else:
+    return False
+
 def changeDateFmt(dt:datetime):
   return datetime.strftime(dt, "%Y%m%d")
+
+@app.errorhandler(Exception)
+def error(e):
+  return {
+    "version": "2.0",
+    "template": {
+      "outputs": [
+        {
+          "basicCard": {
+            "title": "오류 발생",
+            "description": f"아래와 같은 오류가 발생했습니다.\n\"{e}\"",
+            "thumbnails": {
+              "imageUrl": ""
+            }
+          }
+        }
+      ]
+    }
+  }
 
 @app.route("/") # api 서버 접속 시
 def index():
@@ -134,10 +192,9 @@ def api_welcome():
 @app.post("/api/setup") # 학교 설정
 def api_setup():
   req = request.get_json()
-  isUserInData(reqOrg(req).uid)
+  isUserInData(req)
   # ! print((f'{req}').replace("'", "\""))
   imData = json.loads(requests.get(f"https://open.neis.go.kr/hub/schoolInfo?Key={os.environ['NEIS_KEY']}&Type=json&pIndex=1&pSize=10&SCHUL_NM={reqOrg(req).params['sys_text']['origin']}").text)
-  # ! print(imData)
   if not "schoolInfo" in imData:
     res = {
       "version": "2.0",
@@ -188,9 +245,8 @@ def api_setup():
 @app.post("/api/sredir")
 def api_sredir():
   req = request.get_json()
+  isUserInData(req)
   uid = reqOrg(req).uid
-  isUserInData(uid)
-  data = json.load(open("src/data.json", encoding="UTF-8"))
   data[uid]["schoolId"] = reqOrg(req).clientExtra["sid"]
   json.dump(data, open("src/data.json", "w", encoding="UTF-8"), indent=2)
   (data[uid]["schoolFav"]).append(reqOrg(req).clientExtra["sid"])
@@ -213,10 +269,9 @@ def api_sredir():
 @app.post("/api/meal") # 급식 확인
 def api_meal():
   req = request.get_json()
+  isUserInData(req)
   uid = reqOrg(req).uid
-  isUserInData(uid)
-  data = json.load(open("src/data.json", encoding="UTF-8"))
-  if data[reqOrg(req).uid]["schoolId"][0] == None or data[reqOrg(req).uid]["schoolId"][1] == None:
+  if data[uid]["schoolId"][0] == None or data[uid]["schoolId"][1] == None:
     return {
       "version": "2.0",
       "template": {
@@ -247,20 +302,154 @@ def api_meal():
     "모레": datetime.now()+timedelta(2)
   }
   val2Week = {
-    "이번주": [datetime.now() + timedelta(-int(datetime.now().weekday())+i) for i in range(7)],
-    "다음주": [datetime.now() + timedelta(-int(datetime.now().weekday())+7+i) for i in range(7)],
-    "저번주": [datetime.now() + timedelta(-(int(datetime.now().weekday())+7)+i) for i in range(7)]
+    "이번주": [datetime.now() + timedelta(-int(datetime.now().weekday())+i) for i in range(6)],
+    "다음주": [datetime.now() + timedelta(-int(datetime.now().weekday())+7+i) for i in range(6)],
+    "저번주": [datetime.now() + timedelta(-(int(datetime.now().weekday())+7)+i) for i in range(6)]
   }
-  # ! print((f'{req}').replace("'", "\""))
   if "date" in reqOrg(req).clientExtra:
-    pass
-  if not "bot_date" in reqOrg(req).params: # TODO : 어떤 방식으로 급식을 확인하시겠습니까?
-    return {} # TODO : 리턴 값 넣기
+    mealData = json.loads(requests.get(f"https://open.neis.go.kr/hub/mealServiceDietInfo?KEY={os.environ['NEIS_KEY']}&Type=json&ATPT_OFCDC_SC_CODE={data[reqOrg(req).uid]['schoolId'][0]}&SD_SCHUL_CODE={data[reqOrg(req).uid]['schoolId'][1]}&MLSV_YMD={changeDateFmt(reqOrg(req).clientExtra['date'])}").text)
+    if "mealServiceDietInfo" in mealData:
+      mealDataPrs = re.sub("[0-9#.]+", "", (mealData["mealServiceDietInfo"][1]["row"][0]["DDISH_NM"]).replace("<br/>", "\n")).replace("()", "")
+    else:
+      mealDataPrs = "급식 데이터가 없습니다."
+    return regularMealRes(req, reqOrg(req).clientExtra["date"]).meal
+    # {
+    #   "version": "2.0",
+    #   "template": {
+    #     "outputs": [
+    #       {
+    #         "basicCard": {
+    #           "title": f"{val2Date['내일'].year}년 {val2Date['내일'].month}월 {val2Date['내일'].day}일 {daysData[datetime(val2Date['내일'].year, val2Date['내일'].month, val2Date['내일'].day).weekday()]}요일",
+    #           "description": mealDataPrs,
+    #           "thumbnail": {
+    #             "imageUrl": ""
+    #           }
+    #         }
+    #       }
+    #     ],
+    #     "quickReplies": [
+    #       {
+    #         "label": "오늘 급식 확인하기",
+    #         "action": "block",
+    #         "blockId": "64e1ae328aa99716412905ce",
+    #         "extra": {
+    #           "date": val2Date["오늘"]
+    #         }
+    #       },
+    #       {
+    #         "label": "이번주 급식 확인하기",
+    #         "action": "block",
+    #         "blockId": "64e1ae328aa99716412905ce",
+    #         "extra": {
+    #           "date": val2Week["이번주"]
+    #         }
+    #       },
+    #       {
+    #         "label": "특정 날짜의 급식 확인하기",
+    #         "action": "block",
+    #         "blockId": "64e1afb7a6b5503755568189"
+    #       }
+    #     ]
+    #   }
+    # }
+  if not "bot_date" in reqOrg(req).params:
+    if bool8Time():
+      mealData = json.loads(requests.get(f"https://open.neis.go.kr/hub/mealServiceDietInfo?KEY={os.environ['NEIS_KEY']}&Type=json&ATPT_OFCDC_SC_CODE={data[reqOrg(req).uid]['schoolId'][0]}&SD_SCHUL_CODE={data[reqOrg(req).uid]['schoolId'][1]}&MLSV_YMD={changeDateFmt(val2Date['내일'])}").text)
+      if "mealServiceDietInfo" in mealData:
+        mealDataPrs = re.sub("[0-9#.]+", "", (mealData["mealServiceDietInfo"][1]["row"][0]["DDISH_NM"]).replace("<br/>", "\n")).replace("()", "")
+      else:
+        # ! print("Y")
+        mealDataPrs = "급식 데이터가 없습니다."
+      return {
+        "version": "2.0",
+        "template": {
+          "outputs": [
+            {
+              "basicCard": {
+                "title": f"{val2Date['내일'].year}년 {val2Date['내일'].month}월 {val2Date['내일'].day}일 {daysData[datetime(val2Date['내일'].year, val2Date['내일'].month, val2Date['내일'].day).weekday()]}요일 (내일)",
+                "description": mealDataPrs,
+                "thumbnail": {
+                  "imageUrl": ""
+                }
+              }
+            }
+          ],
+          "quickReplies": [
+            {
+              "label": "오늘 급식 확인하기",
+              "action": "block",
+              "blockId": "64e1ae328aa99716412905ce",
+              "extra": {
+                "date": val2Date["오늘"]
+              }
+            },
+            {
+              "label": "이번주 급식 확인하기",
+              "action": "block",
+              "blockId": "64e1ae328aa99716412905ce",
+              "extra": {
+                "date": val2Week["이번주"]
+              }
+            },
+            {
+              "label": "특정 날짜의 급식 확인하기",
+              "action": "block",
+              "blockId": "64e1afb7a6b5503755568189"
+            }
+          ]
+        }
+      }
+    else:
+      mealData = json.loads(requests.get(f"https://open.neis.go.kr/hub/mealServiceDietInfo?KEY={os.environ['NEIS_KEY']}&Type=json&ATPT_OFCDC_SC_CODE={data[reqOrg(req).uid]['schoolId'][0]}&SD_SCHUL_CODE={data[reqOrg(req).uid]['schoolId'][1]}&MLSV_YMD={changeDateFmt(val2Date['오늘'])}").text)
+      if "mealServiceDietInfo" in mealData:
+        mealDataPrs = re.sub("[0-9#.]+", "", (mealData["mealServiceDietInfo"][1]["row"][0]["DDISH_NM"]).replace("<br/>", "\n")).replace("()", "")
+      else:
+        # ! print("Y")
+        mealDataPrs = "급식 데이터가 없습니다."
+      return {
+        "version": "2.0",
+        "template": {
+          "outputs": [
+            {
+              "basicCard": {
+                "title": f"{val2Date['오늘'].year}년 {val2Date['오늘'].month}월 {val2Date['오늘'].day}일 {daysData[datetime(val2Date['오늘'].year, val2Date['오늘'].month, val2Date['오늘'].day).weekday()]}요일 (오늘)",
+                "description": mealDataPrs,
+                "thumbnail": {
+                  "imageUrl": ""
+                }
+              }
+            }
+          ],
+          "quickReplies": [
+            {
+              "label": "내일 급식 확인하기",
+              "action": "block",
+              "blockId": "",
+              "extra": {
+                "date": val2Date["내일"]
+              }
+            },
+            {
+              "label": "이번주 급식 확인하기",
+              "action": "block",
+              "blockId": "",
+              "extra": {
+                "date": val2Week["이번주"]
+              }
+            },
+            {
+              "label": "특정 날짜의 급식 확인하기",
+              "action": "block",
+              "blockId": "64e1afb7a6b5503755568189"
+            }
+          ]
+        }
+      }
   elif reqOrg(req).params["bot_date"]["value"] in val2Date:
     # mealDtVal = val2Date[reqOrg(req).params["bot_date"]["value"]]
-    return regularMealRes(req, val2Date[reqOrg(req).params["bot_date"]["value"]]).meal
+    return regularMealRes(req, val2Date[reqOrg(req).params["bot_date"]["value"]], reqOrg(req).params["bot_date"]["value"]).meal
   elif reqOrg(req).params["bot_date"]["value"] in val2Week: # TODO : 특정 주 급식 출력
-    return {} # TODO : 리턴 값 넣기
+    return carouselMealRes(req, val2Week[reqOrg(req).params["bot_date"]["value"]]).meal
   else:
     try:
       # mealDtVal = datetime.strptime(f"{datetime.now().year}년 {reqOrg(req).params['bot_date']['origin']}", "%Y년 %m월 %d일")
@@ -289,29 +478,11 @@ def api_meal():
           ]
         }
       }
-  # mealData = json.loads(requests.get(f"https://open.neis.go.kr/hub/mealServiceDietInfo?KEY={os.environ['NEIS_KEY']}&Type=json&ATPT_OFCDC_SC_CODE={data[reqOrg(req).uid]['schoolId'][0]}&SD_SCHUL_CODE={data[reqOrg(req).uid]['schoolId'][1]}&MLSV_YMD={changeDateFmt(mealDtVal)}").text)
-  # if "mealServiceDietInfo" in mealData:
-  #   mealDataPrs = re.sub("[0-9#.]+", "", (mealData["mealServiceDietInfo"][1]["row"][0]["DDISH_NM"]).replace("<br/>", "\n")).replace("()", "")
-  # else:
-  #   mealDataPrs = "급식 데이터가 없습니다."
-  # res = {
-  #   "version": "2.0",
-  #   "template": {
-  #     "outputs": [
-  #       {
-  #         "basicCard": {
-  #           "title": f"{mealDtVal.year}년 {mealDtVal.month}월 {mealDtVal.day}일 {daysData[datetime(mealDtVal.year, mealDtVal.month, mealDtVal.day).weekday()]}요일",
-  #           "description": f"{mealDataPrs}",
-  #           "thumbnail": {
-  #             "imageUrl": ""
-  #           }
-  #         }
-  #       }
-  #     ],
-  #     "quickReplies": []
-  #   }
-  # }
-  # return res
+
+@app.post("/api/mplugin") # 급식 확인 플러그인
+def api_mplugin():
+  req = request.get_json()
+  return regularMealRes(req, datetime.strptime(reqOrg(req).params["sys_plugin_date"]["origin"], "%Y-%m-%d")).meal
 
 @app.post("/api/config")
 def api_config():
@@ -349,6 +520,3 @@ def api_config():
 @app.post("/api/credir")
 def api_credir():
   return ""
-
-if __name__ == "__main__":
-  app.run("0.0.0.0", 8000, debug=True)
