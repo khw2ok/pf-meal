@@ -113,7 +113,7 @@ def regularMealRes(req:dict, dt:datetime, opt:str|None=None):
     meal["template"]["outputs"][0]["basicCard"]["title"] = f"{dt.year}년 {dt.month}월 {dt.day}일 {daysData[datetime(dt.year, dt.month, dt.day).weekday()]}요일 ({opt})"
     if opt in mQRRes:
       meal["template"]["quickReplies"] = mQRRes[opt]
-    if opt in ["오늘", "어제"] and mealData != "급식 데이터가 없습니다.":
+    if opt in ["오늘", "어제"] and mealData != "급식 정보가 없습니다.":
       (meal["template"]["outputs"]).append({
         "textCard": {
           "text": f"{opt}의 베스트 메뉴를 선택해주세요.",
