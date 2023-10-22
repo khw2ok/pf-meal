@@ -1,4 +1,9 @@
 .venv/
+.vscode/
 .env
 
-src/test.py
+__pycache__/
+
+test/
+temp.py
+main.backup.py
