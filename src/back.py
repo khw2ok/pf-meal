@@ -257,7 +257,7 @@ def meal_get():
       return carouselMealRes(req, val2Week[reqOrg(req).clientExtra["date"]], reqOrg(req).clientExtra["date"])
     # return regularMealRes(req, reqOrg(req).clientExtra["date"])
   if not "bot_date" in reqOrg(req).params:
-    if datetime.now().hour >= 18:
+    if datetime.now().hour >= 20:
       return regularMealRes(req, val2Date["내일"], "내일")
     else:
       return regularMealRes(req, val2Date["오늘"], "오늘")
@@ -339,42 +339,61 @@ def meal_bestsel():
 def api_bmres():
   req = request.get_json()
   mdata = json.load(open("src/data/mdata.json", encoding="UTF-8"))
-  tMonth = changeDateFmt(datetime.now())[:-2]
+  tMonth = datetime.strftime(datetime.now(), "%Y-%m")
   try:
     mdata_month = json.load(open(f"src/data/mdata.{tMonth}.json", encoding="UTF-8"))
-  except FileNotFoundError:
-    with open(f"src/data/mdata.{changeDateFmt(datetime.now())[:-2]}.json", "w", encoding="UTF-8") as file: pass
-    mdata_month = json.load(open(f"src/data/mdata.{changeDateFmt(datetime.now())[:-2]}.json", encoding="UTF-8"))
+  except FileNotFoundError or json.decoder.JSONDecodeError:
+    with open(f"src/data/mdata.{datetime.strftime(datetime.now(), '%Y-%m')}.json", "w", encoding="UTF-8") as file:
+      file.write("{}")
+      file.close()
+    mdata_month = json.load(open(f"src/data/mdata.{datetime.strftime(datetime.now(), '%Y-%m')}.json", encoding="UTF-8"))
   if not "meal" in reqOrg(req).clientExtra:
     raise CError("올바르지 않은 값이 전달되었습니다.\n")
-  if not reqOrg(req).clientExtra["meal"] in mdata:
-    mdata[reqOrg(req).clientExtra["meal"]] = {"score": []}
-  if not reqOrg(req).clientExtra["meal"] in mdata_month:
-    mdata_month[reqOrg(req).clientExtra["meal"]] = {"score": []}
-  if changeDateFmt(datetime.now()) in [d.get(reqOrg(req).uid) for d in mdata[reqOrg(req).clientExtra["meal"]]["score"]]:
-    return {
-      "version": "2.0",
-      "template": {
-        "outputs": [
-          {
-            "simpleText": {
-              "text": "오늘은 이미 베스트 메뉴를 선택하셨습니다. 내일 다시 시도해 주시기 바랍니다."
-            }
+  if not reqOrg(req).clientExtra["meal"].rstrip(" ") in mdata:
+    mdata[reqOrg(req).clientExtra["meal"].rstrip(" ")] = {"score": []}
+  if not reqOrg(req).clientExtra["meal"].rstrip(" ") in mdata_month:
+      mdata_month[reqOrg(req).clientExtra["meal"].rstrip(" ")] = {"score": []}
+  for key, val in mdata.items():
+    for i in val["score"]:
+      if reqOrg(req).uid in i and i[reqOrg(req).uid] == "20231025":
+        # ! print(f'키 "{key}"의 score 리스트 안에 abcd의 값이 "20231025"입니다.')
+        return {
+          "version": "2.0",
+          "template": {
+            "outputs": [
+              {
+                "textCard": {
+                  "text": "오늘은 이미 베스트 메뉴를 선택하셨습니다. 내일 다시 시도해 주시기 바랍니다.\n아래 버튼을 통해 베스트 메뉴 랭킹을 확인해보세요.",
+                  "buttons": [
+                    {
+                      "action": "webLink",
+                      "label": "바로가기",
+                      "webLinkUrl": "" # TODO : 링크 추가해야 함
+                    }
+                  ]
+                }
+              }
+            ]
           }
-        ]
-      }
-    }
-  mdata[reqOrg(req).clientExtra["meal"]]["score"].append({reqOrg(req).uid: changeDateFmt(datetime.now())})
+        }
+  mdata[reqOrg(req).clientExtra["meal"].rstrip(" ")]["score"].append({reqOrg(req).uid: changeDateFmt(datetime.now())})
   json.dump(mdata, open("src/data/mdata.json", "w", encoding="UTF-8"), indent=2)
-  mdata_month[reqOrg(req).clientExtra["meal"]]["score"].append({reqOrg(req).uid: changeDateFmt(datetime.now())})
+  mdata_month[reqOrg(req).clientExtra["meal"].rstrip(" ")]["score"].append({reqOrg(req).uid: changeDateFmt(datetime.now())})
   json.dump(mdata_month, open(f"src/data/mdata.{tMonth}.json", "w", encoding="UTF-8"), indent=2)
   return {
     "version": "2.0",
     "template": {
       "outputs": [
         {
-          "simpleText": {
-            "text": f"{korED(reqOrg(req).clientExtra['meal'])} 베스트 메뉴로 선택하셨습니다.\n아래 버튼을 통해 베스트 메뉴 랭킹을 확인해보세요."
+          "textCard": {
+            "text": f"{korED(reqOrg(req).clientExtra['meal'].rstrip(' '))} 베스트 메뉴로 선택하셨습니다.\n아래 버튼을 통해 베스트 메뉴 랭킹을 확인해보세요.",
+            "buttons": [
+              {
+                "action": "webLink",
+                "label": "바로가기",
+                "webLinkUrl": "" # TODO : 링크 추가해야 함
+              }
+            ]
           }
         }
       ]

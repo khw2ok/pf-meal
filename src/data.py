@@ -124,7 +124,7 @@ def regularMealRes(req:dict, dt:datetime, opt:str|None=None):
               "blockId": "65223a604f3e9c3d821a38f4", # ! 여기 제대로 만들어야 함
               "extra": {
                 "dt": opt,
-                "meal": mealData
+                "meal": re.sub(r"\((.*?)\)", "", mealData)
               }
             }
           ]
@@ -198,6 +198,6 @@ def updateMeal8Fav(req:dict, meal:str):
 
 def korED(t:str):
   if (ord(t[-1]) - ord('가')) % 28 != 0:
-    return f"{t}을"
+    return f"\"{t}\"을"
   else:
-    return f"{t}를"
+    return f"\"{t}\"를"
