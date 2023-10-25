@@ -10,7 +10,7 @@
 │   ├─ data
 │   │   │  mdata.*.json
 │   │   │  mdata.json
-│   │   └─ udata.py
+│   │   └─ udata.json
 │   │  back.py
 │   │  front.py
 │   └─ init.py
