@@ -5,9 +5,6 @@ app = Blueprint("front", __name__, url_prefix="/m")
 from urllib import parse
 import json
 
-def updateSession():
-  """asdf"""
-
 @app.route("/")
 def index():
   return render_template("index.html")
@@ -37,11 +34,14 @@ def config_uid(uid:str):
     return render_template("config_uid.html", udata=udata, prms=prms, uid=uid, enumerate=enumerate, parse=parse)
 
 @app.route("/rank")
-def test():
+def rank():
   mdata = json.load(open("src/data/mdata.json", encoding="UTF-8"))
   prms = request.args.to_dict()
   if not "m" in prms: prms["m"] = datetime.strftime(datetime.now(), "%Y-%m")
   try: mdata_month = json.load(open(f"src/data/mdata.{prms['m']}.json", encoding="UTF-8"))
-  except FileNotFoundError:
-    return {"message": "유효하지 않은 날짜 입니다."}
+  except FileNotFoundError or json.decoder.JSONDecodeError:
+    with open(f"src/data/mdata.{datetime.strftime(datetime.now(), '%Y-%m')}.json", "w", encoding="UTF-8") as file:
+      file.write("{}")
+      file.close()
+    mdata_month = json.load(open(f"src/data/mdata.{datetime.strftime(datetime.now(), '%Y-%m')}.json", encoding="UTF-8"))
   return render_template("rank.html", mdata=dict(reversed(sorted(mdata.items(), key=lambda i: len(i[1]["score"])))), mdata_month=mdata_month, prms=prms, list=list, mdkeys=list(mdata.keys()), enumerate=enumerate, len=len, parse=parse)

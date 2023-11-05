@@ -319,7 +319,7 @@ def meal_fav():
               {
                 "action": "webLink",
                 "label": "바로가기",
-                "webLinkUrl": "" # TODO : 링크 추가해야 함
+                "webLinkUrl": f"https://khw2.kro.kr/m/config/{reqOrg(req).uid}"
               }
             ]
           }
@@ -384,19 +384,18 @@ def api_bmres():
   for key, val in mdata.items():
     for i in val["score"]:
       if reqOrg(req).uid in i and i[reqOrg(req).uid] == "20231025":
-        # ! print(f'키 "{key}"의 score 리스트 안에 abcd의 값이 "20231025"입니다.')
         return {
           "version": "2.0",
           "template": {
             "outputs": [
               {
                 "textCard": {
-                  "text": "오늘은 이미 베스트 메뉴를 선택하셨습니다. 내일 다시 시도해 주시기 바랍니다.\n아래 버튼을 통해 베스트 메뉴 랭킹을 확인해보세요.",
+                  "text": "오늘은 이미 베스트 메뉴를 선택하셨습니다. 내일 다시 시도해 주시기 바랍니다.\n아래 버튼을 통해 베스트 메뉴 순위를 확인해보세요.",
                   "buttons": [
                     {
                       "action": "webLink",
                       "label": "바로가기",
-                      "webLinkUrl": "" # TODO : 링크 추가해야 함
+                      "webLinkUrl": "https://khw2.kro.kr/m/rank"
                     }
                   ]
                 }
@@ -414,12 +413,12 @@ def api_bmres():
       "outputs": [
         {
           "textCard": {
-            "text": f"{korED(reqOrg(req).clientExtra['meal'].rstrip(' '))} 베스트 메뉴로 선택하셨습니다.\n아래 버튼을 통해 베스트 메뉴 랭킹을 확인해보세요.",
+            "text": f"{korED(reqOrg(req).clientExtra['meal'].rstrip(' '))} 베스트 메뉴로 선택하셨습니다.\n아래 버튼을 통해 베스트 메뉴 순위를 확인해보세요.",
             "buttons": [
               {
                 "action": "webLink",
                 "label": "바로가기",
-                "webLinkUrl": "" # TODO : 링크 추가해야 함
+                "webLinkUrl": "https://khw2.kro.kr/m/rank"
               }
             ]
           }
@@ -438,12 +437,12 @@ def meal_rank():
       "outputs": [
         {
           "textCard": {
-            "text": "아래 버튼의 페이지에서 급식 랭킹을 확인 할 수 있습니다.",
+            "text": "아래 버튼의 페이지에서 급식 순위를 확인 할 수 있습니다.",
             "buttons": [
               {
                 "action": "webLink",
                 "label": "바로가기",
-                "webLinkUrl": "" # TODO : 링크 추가해야 함
+                "webLinkUrl": "https://khw2.kro.kr/m/rank"
               }
             ]
           }
@@ -452,4 +451,3 @@ def meal_rank():
     }
   }
   return res
-
