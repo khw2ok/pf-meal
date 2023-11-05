@@ -62,6 +62,10 @@ def error(e):
     }
   }
 
+@app.post("/gen/fallback")
+def gen_fallback():
+  return ""
+
 @app.post("/gen/welcome")
 def gen_welcome():
   req = request.get_json()
@@ -72,7 +76,7 @@ def gen_welcome():
       "outputs": [
         {
           "simpleText": {
-            "text": "안녕하세요, \"급식 먹는 시간\"입니다.\n저와의 대화를 통해서 학교 급식을 빠르게 알아볼 수 있습니다."
+            "text": "안녕하세요, \"급식 먹는 시간\" 입니다.\n저와의 대화를 통해서 학교 급식을 빠르게 알아볼 수 있습니다."
           }
         },
         {
@@ -246,16 +250,38 @@ def meal_get():
     "모레": datetime.now()+timedelta(2)
   }
   val2Week = {
-    "이번주": [datetime.now() + timedelta(-int(datetime.now().weekday())+i) for i in range(6)],
-    "다음주": [datetime.now() + timedelta(-int(datetime.now().weekday())+7+i) for i in range(6)],
-    "저번주": [datetime.now() + timedelta(-(int(datetime.now().weekday())+7)+i) for i in range(6)]
+    "이번주": [datetime.now() + timedelta(-int(datetime.now().weekday())+i) for i in range(7)],
+    "다음주": [datetime.now() + timedelta(-int(datetime.now().weekday())+7+i) for i in range(7)],
+    "저번주": [datetime.now() + timedelta(-(int(datetime.now().weekday())+7)+i) for i in range(7)]
+  }
+  val2Days = {
+    "월요일": val2Week["이번주"][0],
+    "화요일": val2Week["이번주"][1],
+    "수요일": val2Week["이번주"][2],
+    "목요일": val2Week["이번주"][3],
+    "금요일": val2Week["이번주"][4],
+    "토요일": val2Week["이번주"][5],
+    "일요일": val2Week["이번주"][6],
+    "다음주 월요일": val2Week["다음주"][0],
+    "다음주 화요일": val2Week["다음주"][1],
+    "다음주 수요일": val2Week["다음주"][2],
+    "다음주 목요일": val2Week["다음주"][3],
+    "다음주 금요일": val2Week["다음주"][4],
+    "다음주 토요일": val2Week["다음주"][5],
+    "다음주 일요일": val2Week["다음주"][6],
+    "저번주 월요일": val2Week["저번주"][0],
+    "저번주 화요일": val2Week["저번주"][1],
+    "저번주 수요일": val2Week["저번주"][2],
+    "저번주 목요일": val2Week["저번주"][3],
+    "저번주 금요일": val2Week["저번주"][4],
+    "저번주 토요일": val2Week["저번주"][5],
+    "저번주 일요일": val2Week["저번주"][6]
   }
   if "date" in reqOrg(req).clientExtra:
     if reqOrg(req).clientExtra["date"] in val2Date:
       return regularMealRes(req, val2Date[reqOrg(req).clientExtra["date"]], reqOrg(req).clientExtra["date"])
     if reqOrg(req).clientExtra["date"] in val2Week:
       return carouselMealRes(req, val2Week[reqOrg(req).clientExtra["date"]], reqOrg(req).clientExtra["date"])
-    # return regularMealRes(req, reqOrg(req).clientExtra["date"])
   if not "bot_date" in reqOrg(req).params:
     if datetime.now().hour >= 20:
       return regularMealRes(req, val2Date["내일"], "내일")
@@ -265,6 +291,8 @@ def meal_get():
     return regularMealRes(req, val2Date[reqOrg(req).params["bot_date"]["value"]], reqOrg(req).params["bot_date"]["value"])
   elif reqOrg(req).params["bot_date"]["value"] in val2Week:
     return carouselMealRes(req, val2Week[reqOrg(req).params["bot_date"]["value"]], reqOrg(req).params["bot_date"]["value"])
+  elif reqOrg(req).params["bot_date"]["value"] in val2Days:
+    return regularMealRes(req, val2Days[reqOrg(req).params["bot_date"]["value"]])
   else:
     try:
       return regularMealRes(req, datetime.strptime(f"{datetime.now().year}년 {reqOrg(req).params['bot_date']['origin']}", "%Y년 %m월 %d일"))
