@@ -183,17 +183,17 @@ def getMealData(req:dict, dt:datetime):
   mealData = json.loads(requests.get(f"https://open.neis.go.kr/hub/mealServiceDietInfo?KEY={os.environ['NEIS_KEY']}&Type=json&ATPT_OFCDC_SC_CODE={udata[reqOrg(req).uid]['schoolId'][0]}&SD_SCHUL_CODE={udata[reqOrg(req).uid]['schoolId'][1]}&MLSV_YMD={changeDateFmt(dt)}").text)
   if "mealServiceDietInfo" in mealData:
     mealDataPrs = re.sub("[0-9#.]+", "", (mealData["mealServiceDietInfo"][1]["row"][0]["DDISH_NM"]).replace("<br/>", "\n")).replace("()", "")
-    mealDataPrs = updateMeal8Fav(req, mealDataPrs)
+    mealDataPrs = updateMealData(req, mealDataPrs)
   else:
     mealDataPrs = "급식 정보가 없습니다."
   return mealDataPrs
 
-def updateMeal8Fav(req:dict, meal:str):
+def updateMealData(req:dict, meal:str):
   udata = json.load(open("src/data/udata.json", encoding="UTF-8"))
   mealData = meal.split("\n")
   for i in udata[reqOrg(req).uid]["mealFav"]:
     for n, j in enumerate(mealData):
-      if i in j: mealData[n] = "+ " + j
+      if i in j: mealData[n] = "❤️ " + j
   return "\n".join(mealData)
 
 def korED(t:str):

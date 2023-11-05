@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import os
 
 from src import front, back
-from src.data import *
 from flask import Flask
 app = Flask(__name__)
 app.secret_key = os.environ["APP_SECRET_KEY"]
