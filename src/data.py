@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta
-import dotenv
+from datetime import datetime
 
 import json, os, re, requests
 

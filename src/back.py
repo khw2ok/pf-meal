@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import dotenv
 dotenv.load_dotenv()
 
-import json, os, re, requests
+import json, os, requests
 
 def isUserInData(req:dict):
   udata = json.load(open("src/data/udata.json", encoding="UTF-8"))
@@ -139,7 +139,6 @@ def sch_check():
       ]
     }
   }
-  print(udata)
   if udata[uid]["schoolId"][0] == None or udata[uid]["schoolId"][1] == None:
     res["template"]["outputs"][0]["simpleText"]["text"] = "현재 학교가 설정되어 있지 않습니다.\n학교를 설정하시겠습니까?"
   else:
@@ -154,8 +153,8 @@ def sch_check():
 def sch_setup():
   req = request.get_json()
   isUserInData(req)
-  imData = json.loads(requests.get(f"https://open.neis.go.kr/hub/schoolInfo?Key={os.environ['NEIS_KEY']}&Type=json&pIndex=1&pSize=10&SCHUL_NM={reqOrg(req).params['sys_text']['origin']}").text)
-  if not "schoolInfo" in imData:
+  schData = json.loads(requests.get(f"https://open.neis.go.kr/hub/schoolInfo?Key={os.environ['NEIS_KEY']}&Type=json&pIndex=1&pSize=10&SCHUL_NM={reqOrg(req).params['sys_text']['origin']}").text)
+  if not "schoolInfo" in schData:
     return {
       "version": "2.0",
       "template": {
@@ -191,7 +190,7 @@ def sch_setup():
       "quickReplies": []
     }
   }
-  for i in imData["schoolInfo"][1]["row"]:
+  for i in schData["schoolInfo"][1]["row"]:
     (res["template"]["outputs"][0]["listCard"]["items"]).append({
       "title": i["SCHUL_NM"],
       "description": i["ORG_RDNMA"]
@@ -319,7 +318,7 @@ def meal_fav():
               {
                 "action": "webLink",
                 "label": "바로가기",
-                "webLinkUrl": f"https://khw2.kro.kr/m/config/{reqOrg(req).uid}"
+                "webLinkUrl": f"https://khw2.kr/m/config/{reqOrg(req).uid}"
               }
             ]
           }
@@ -354,11 +353,11 @@ def meal_bestsel():
   }
   for i in mealArr:
     (res["template"]["quickReplies"]).append({
-      "label": i,
+      "label": i.rstrip(" "),
       "action": "block",
       "blockId": "6522424988c60e498232e41e",
       "extra": {
-        "meal": i
+        "meal": i.rstrip(" ")
       }
     })
   return res
@@ -395,7 +394,7 @@ def api_bmres():
                     {
                       "action": "webLink",
                       "label": "바로가기",
-                      "webLinkUrl": "https://khw2.kro.kr/m/rank"
+                      "webLinkUrl": "https://khw2.kr/m/rank"
                     }
                   ]
                 }
@@ -418,7 +417,7 @@ def api_bmres():
               {
                 "action": "webLink",
                 "label": "바로가기",
-                "webLinkUrl": "https://khw2.kro.kr/m/rank"
+                "webLinkUrl": "https://khw2.kr/m/rank"
               }
             ]
           }
@@ -442,7 +441,7 @@ def meal_rank():
               {
                 "action": "webLink",
                 "label": "바로가기",
-                "webLinkUrl": "https://khw2.kro.kr/m/rank"
+                "webLinkUrl": "https://khw2.kr/m/rank"
               }
             ]
           }
