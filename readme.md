@@ -22,9 +22,9 @@
 ├─ test
 │  .env
 │  .gitignore
+│  app.py
 │  readme.md
 │  reqiuirements.txt
-│  run.py
 └─ tailwind.config.js
 ```
 
