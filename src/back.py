@@ -109,6 +109,29 @@ def gen_welcome():
     }
   return res
 
+@app.post("/gen/goweb")
+def gen_goweb():
+  req = request.get_json()
+  return {
+    "version": "2.0",
+    "template": {
+      "outputs": [
+        {
+          "textCard": {
+            "text": "아래 버튼을 눌러 웹사이트로 이동하실 수 있습니다.",
+            "buttons": [
+              {
+                "label": "바로가기",
+                "action": "webLink",
+                "webLinkUrl": f"https://khw2.kr/m/?uid={reqOrg(req).uid}"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+
 @app.post("/sch/check")
 def sch_check():
   req = request.get_json()
@@ -396,7 +419,7 @@ def api_bmres():
                     {
                       "action": "webLink",
                       "label": "바로가기",
-                      "webLinkUrl": "https://khw2.kr/m/rank"
+                      "webLinkUrl": f"https://khw2.kr/m/rank?uid={reqOrg(req).uid}"
                     }
                   ]
                 }
@@ -419,7 +442,7 @@ def api_bmres():
               {
                 "action": "webLink",
                 "label": "바로가기",
-                "webLinkUrl": "https://khw2.kr/m/rank"
+                "webLinkUrl": f"https://khw2.kr/m/rank?uid={reqOrg(req).uid}"
               }
             ]
           }
@@ -443,7 +466,7 @@ def meal_rank():
               {
                 "action": "webLink",
                 "label": "바로가기",
-                "webLinkUrl": "https://khw2.kr/m/rank"
+                "webLinkUrl": f"https://khw2.kr/m/rank?uid={reqOrg(req).uid}"
               }
             ]
           }

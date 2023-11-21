@@ -5,13 +5,21 @@ app = Blueprint("front", __name__, url_prefix="/m")
 from urllib import parse
 import json
 
+def sessionUID(prms:dict):
+  if "uid" in prms:
+    session["uid"] = prms["uid"]
+
 @app.route("/")
 def index():
+  prms = request.args.to_dict()
+  sessionUID(prms)
   return render_template("index.html")
 
 @app.route("/config")
 def config():
-  return render_template("config.html")
+  prms = request.args.to_dict()
+  sessionUID(prms)
+  return render_template("config.html", session=session)
 
 @app.route("/config/<uid>", methods=["GET", "POST"])
 def config_uid(uid:str):
@@ -30,11 +38,14 @@ def config_uid(uid:str):
     prms = request.args.to_dict()
     if not "s" in prms: prms["s"] = ""
     if not uid in udata:
-      return render_template("error.html", msg="유효하지 않은 uid 입니다.")
+      return render_template("error.html", msg="유효하지 않은 아이디 입니다.")
+    session["uid"] = uid
     return render_template("config_uid.html", udata=udata, prms=prms, uid=uid, enumerate=enumerate, parse=parse)
 
 @app.route("/rank")
 def rank():
+  prms = request.args.to_dict()
+  sessionUID(prms)
   mdata = json.load(open("src/data/mdata.json", encoding="UTF-8"))
   prms = request.args.to_dict()
   if not "m" in prms: prms["m"] = datetime.strftime(datetime.now(), "%Y-%m")
