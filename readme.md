@@ -29,7 +29,7 @@
 ```
 
 ```bash
-$ python run.py
+$ python app.py
 ```
 
 ## 이용된 API
