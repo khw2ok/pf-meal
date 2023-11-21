@@ -30,7 +30,7 @@ def config_uid(uid:str):
     prms = request.args.to_dict()
     if not "s" in prms: prms["s"] = ""
     if not uid in udata:
-      return {"message": "유효하지 않은 uid 입니다."}
+      return render_template("error.html", msg="유효하지 않은 uid 입니다.")
     return render_template("config_uid.html", udata=udata, prms=prms, uid=uid, enumerate=enumerate, parse=parse)
 
 @app.route("/rank")

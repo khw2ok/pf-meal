@@ -115,14 +115,15 @@ def regularMealRes(req:dict, dt:datetime, opt:str|None=None):
     if opt in ["오늘", "어제"] and mealData != "급식 정보가 없습니다.":
       (meal["template"]["outputs"]).append({
         "textCard": {
-          "text": f"{opt}의 베스트 메뉴를 선택해주세요.",
+          "text": f"{opt}의 베스트 메뉴를 하나 선택해주세요.",
           "buttons": [
             {
               "label": "바로가기",
               "action": "block",
               "blockId": "65223a604f3e9c3d821a38f4", # ! 여기 제대로 만들어야 함
               "extra": {
-                "dt": opt,
+                "dt": changeDateFmt(dt),
+                "opt": opt,
                 "meal": re.sub(r"\((.*?)\)", "", mealData)
               }
             }

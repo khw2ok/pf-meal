@@ -335,8 +335,10 @@ def meal_allergy():
 @app.post("/meal/bestsel")
 def meal_bestsel():
   req = request.get_json()
-  if (not "dt" in reqOrg(req).clientExtra) or (not "meal" in reqOrg(req).clientExtra):
+  if (not "dt" in reqOrg(req).clientExtra) or (not "opt" in reqOrg(req).clientExtra) or (not "meal" in reqOrg(req).clientExtra):
     raise CError("올바르지 않은 값이 전달되었습니다.")
+  if (reqOrg(req).clientExtra["dt"] != changeDateFmt(datetime.now())) and (reqOrg(req).clientExtra["dt"] != changeDateFmt(datetime.now()-timedelta(1))):
+    raise CError("올바르지 않은 날짜가 전달되었습니다.")
   mealArr = (reqOrg(req).clientExtra["meal"]).split("\n")
   res = {
     "version": "2.0",
@@ -344,7 +346,7 @@ def meal_bestsel():
       "outputs": [
         {
           "simpleText": {
-            "text": f"{reqOrg(req).clientExtra['dt']}의 베스트 메뉴를 아래 메뉴를 통해 하나를 선택해주세요.\n\n※ \"취소\" 를 보내 선택을 취소할 수 있습니다."
+            "text": f"{reqOrg(req).clientExtra['opt']}의 베스트 메뉴를 아래 메뉴를 통해 하나를 선택해주세요.\n\n※ \"취소\" 를 보내 선택을 취소할 수 있습니다."
           }
         }
       ],
@@ -382,7 +384,7 @@ def api_bmres():
       mdata_month[reqOrg(req).clientExtra["meal"].rstrip(" ")] = {"score": []}
   for key, val in mdata.items():
     for i in val["score"]:
-      if reqOrg(req).uid in i and i[reqOrg(req).uid] == "20231025":
+      if reqOrg(req).uid in i and i[reqOrg(req).uid] == changeDateFmt(datetime.now()):
         return {
           "version": "2.0",
           "template": {
