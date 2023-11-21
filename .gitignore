@@ -1,0 +1,12 @@
+.venv/
+.vscode/
+.env
+
+__pycache__/
+
+static/info.txt
+templates/
+test/
+
+temp.py
+main.backup.py
