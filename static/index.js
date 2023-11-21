@@ -17,3 +17,11 @@ function updateUrl(key, value){
     return (href.indexOf("?") > -1) ? href + "&" + key + "=" + value : href + "?" + key + "=" + value;
   }
 };
+
+window.onload = function(){
+  if ($(document).width() >= 350){
+    $("#main>div").css("min-width", 330)
+  } else {
+    $("#main>div").css("min-width", $("#main").width())
+  }
+}
