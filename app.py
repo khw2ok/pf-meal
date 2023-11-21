@@ -11,4 +11,4 @@ app.register_blueprint(front.app)
 app.register_blueprint(back.app)
 
 if __name__ == "__main__":
-  app.run("0.0.0.0", 8000, True)
+  app.run("0.0.0.0", 8000)
