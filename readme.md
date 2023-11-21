@@ -135,11 +135,70 @@ $ python run.py
 
 [https://khw2.kr/m/config](https://khw2.kr/m/config)
 
+<img src="static/img/7.png" height="400">
 
 ### 베스트 메뉴 선택
 오늘이나 어제의 급식을 확인하는 경우, 그 날의 베스트 메뉴를 하나 선택할 수 있습니다.
 
-<img src="static/img/3.png" height="500">
+<img src="static/img/8.png" height="400">
 
 추가로, 선택된 메뉴는 급식 순위로 올라가며, 아래 링크를 통해 확인할 수 있습니다.  
+
 [https://khw2.kr/m/rank](https://khw2.kr/m/rank)
+
+아래는 예시 화면입니다.
+
+<img src="static/img/9.png" height="400">
+
+## 데이터 구조
+
+### 이용자 데이터
+`src/data/udata.json` 위치에 저장되며, 아래는 이용자가 처음 챗봇을 이용할 때 저장되는 최초 구조와 구조의 예시입니다.
+
+```json
+{
+  "<uid>": {
+    "schoolId": [null, null],
+    "schoolFav": [],
+    "mealFav": [],
+    "settings": {
+      "allergicMeal": false,
+      "notifMeal": false
+    },
+    "usage": 0
+  }
+}
+```
+
+```json
+{
+  "example": {
+    "schoolId": ["A00", "000"],
+    "schoolFav": [
+      ["A00", "000"]
+    ],
+    "mealFav": [
+      "소세지",
+      "스테이크"
+    ],
+    "settings": {
+      "allergicMeal": false,
+      "notifMeal": false
+    },
+    "usage": 0
+  }
+}
+```
+
+### 급식 데이터
+`src/data/mdata.json` 위치에 저장되고, 월별 급식 데이터는 `src/data/mdata.*.json` 위치에 저장되며, 구조는 똑같습니다.
+
+```json
+{
+  "<mealName>": {
+    "score": [
+      {"<uid>": "231103"}
+    ]
+  }
+}
+```
