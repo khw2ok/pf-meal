@@ -112,6 +112,18 @@ def regularMealRes(req:dict, dt:datetime, opt:str|None=None):
     meal["template"]["outputs"][0]["basicCard"]["title"] = f"{dt.year}년 {dt.month}월 {dt.day}일 {daysData[datetime(dt.year, dt.month, dt.day).weekday()]}요일 ({opt})"
     if opt in mQRRes:
       meal["template"]["quickReplies"] = mQRRes[opt]
+    tMonth = datetime.strftime(datetime.now(), "%Y-%m")
+    try:
+      mdata_month = json.load(open(f"src/data/mdata.{tMonth}.json", encoding="UTF-8"))
+    except FileNotFoundError or json.decoder.JSONDecodeError:
+      with open(f"src/data/mdata.{datetime.strftime(datetime.now(), '%Y-%m')}.json", "w", encoding="UTF-8") as file:
+        file.write("{}")
+        file.close()
+      mdata_month = json.load(open(f"src/data/mdata.{datetime.strftime(datetime.now(), '%Y-%m')}.json", encoding="UTF-8"))
+    for key, val in mdata_month.items():
+      for i in val["score"]:
+        if reqOrg(req).uid in i and i[reqOrg(req).uid] == changeDateFmt(dt):
+          return meal
     if opt in ["오늘", "어제"] and mealData != "급식 정보가 없습니다.":
       (meal["template"]["outputs"]).append({
         "textCard": {
@@ -195,6 +207,9 @@ def updateMealData(req:dict, meal:str):
     for n, j in enumerate(mealData):
       if i in j: mealData[n] = "❤️ " + j
   return "\n".join(mealData)
+
+def updateMealArr(x):
+  return re.sub(r"[^가-힣]", "", x)
 
 def korED(t:str):
   if (ord(t[-1]) - ord('가')) % 28 != 0:
