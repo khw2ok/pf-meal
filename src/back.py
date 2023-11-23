@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import dotenv
 dotenv.load_dotenv()
 
-import json, os, requests
+import json, os, random, requests
 
 def isUserInData(req:dict):
   udata = json.load(open("src/data/udata.json", encoding="UTF-8"))
@@ -64,7 +64,24 @@ def error(e):
 
 @app.post("/gen/fallback")
 def gen_fallback():
-  return ""
+  req = request.get_json()
+  res = {
+    "version": "2.0",
+    "template": {
+      "outputs": [
+        {
+          "simpleText": {
+            "text": ""
+          }
+        }
+      ]
+    }
+  }
+  if reqOrg(req).utterance in ["취소", "취소하기", "탈출"]:
+    res["template"]["outputs"][0]["simpleText"]["text"] = "취소되었습니다."
+    return res
+  res["template"]["outputs"][0]["simpleText"]["text"] = random.choice(["무엇을 원하는지 잘 모르겠어요", "이해하기 어려워요", "제가 할 수 있는 일이 아니에요"])
+  return res
 
 @app.post("/gen/welcome")
 def gen_welcome():
@@ -363,6 +380,7 @@ def meal_bestsel():
   if (reqOrg(req).clientExtra["dt"] != changeDateFmt(datetime.now())) and (reqOrg(req).clientExtra["dt"] != changeDateFmt(datetime.now()-timedelta(1))):
     raise CError("올바르지 않은 날짜가 전달되었습니다.")
   mealArr = (reqOrg(req).clientExtra["meal"]).split("\n")
+  mealArr = map(updateMealArr, mealArr)
   res = {
     "version": "2.0",
     "template": {
@@ -378,11 +396,11 @@ def meal_bestsel():
   }
   for i in mealArr:
     (res["template"]["quickReplies"]).append({
-      "label": i.rstrip(" "),
+      "label": i,
       "action": "block",
       "blockId": "6522424988c60e498232e41e",
       "extra": {
-        "meal": i.rstrip(" ")
+        "meal": i
       }
     })
   return res
@@ -392,20 +410,14 @@ def api_bmres():
   req = request.get_json()
   mdata = json.load(open("src/data/mdata.json", encoding="UTF-8"))
   tMonth = datetime.strftime(datetime.now(), "%Y-%m")
-  try:
-    mdata_month = json.load(open(f"src/data/mdata.{tMonth}.json", encoding="UTF-8"))
-  except FileNotFoundError or json.decoder.JSONDecodeError:
-    with open(f"src/data/mdata.{datetime.strftime(datetime.now(), '%Y-%m')}.json", "w", encoding="UTF-8") as file:
-      file.write("{}")
-      file.close()
-    mdata_month = json.load(open(f"src/data/mdata.{datetime.strftime(datetime.now(), '%Y-%m')}.json", encoding="UTF-8"))
+  mdata_month = json.load(open(f"src/data/mdata.{tMonth}.json", encoding="UTF-8"))
   if not "meal" in reqOrg(req).clientExtra:
     raise CError("올바르지 않은 값이 전달되었습니다.\n")
-  if not reqOrg(req).clientExtra["meal"].rstrip(" ") in mdata:
-    mdata[reqOrg(req).clientExtra["meal"].rstrip(" ")] = {"score": []}
-  if not reqOrg(req).clientExtra["meal"].rstrip(" ") in mdata_month:
-      mdata_month[reqOrg(req).clientExtra["meal"].rstrip(" ")] = {"score": []}
-  for key, val in mdata.items():
+  if not reqOrg(req).clientExtra["meal"] in mdata:
+    mdata[reqOrg(req).clientExtra["meal"]] = {"score": []}
+  if not reqOrg(req).clientExtra["meal"] in mdata_month:
+      mdata_month[reqOrg(req).clientExtra["meal"]] = {"score": []}
+  for key, val in mdata_month.items():
     for i in val["score"]:
       if reqOrg(req).uid in i and i[reqOrg(req).uid] == changeDateFmt(datetime.now()):
         return {
