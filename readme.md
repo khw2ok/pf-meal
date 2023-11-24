@@ -13,8 +13,8 @@
 │   │   │  mdata.json
 │   │   └─ udata.json
 │   │  back.py
-│   │  front.py
-│   └─ init.py
+│   │  data.py
+│   └─ front.py
 ├─ static
 │   ├─ img
 │   └─ index.js
