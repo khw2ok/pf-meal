@@ -38,7 +38,7 @@ $ python app.py
 ## 개념
 본 문서를 이해하기 쉽도록 일부 개념들을 설명해 두었습니다.
 
-<img src="static/img/0.jpg" height="400">
+<img src="static/img/0.jpg" width="500">
 
 ### 엔티티
 위의 "**오늘 급식 알려줘**"라는 발화에서 "**오늘**"은 `@bot.date`란 엔티티로 인식됩니다.
