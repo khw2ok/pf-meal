@@ -25,11 +25,19 @@
 │  app.py
 │  readme.md
 │  reqiuirements.txt
+│  run.sh
 └─ tailwind.config.js
+```
+
+```
+.env
+APP_SECRET_KEY
+NEIS_KEY
 ```
 
 ```bash
 $ python app.py
+$ . run.sh
 ```
 
 ## 이용된 API
