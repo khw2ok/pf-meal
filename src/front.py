@@ -1,6 +1,6 @@
 from .data import *
 from flask import Blueprint, render_template, request, session
-app = Blueprint("front", __name__, url_prefix="/")
+app = Blueprint("front", __name__, url_prefix="/m")
 
 from urllib import parse
 import json

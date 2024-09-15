@@ -1,6 +1,6 @@
 from .data import *
 from flask import Blueprint, request
-app = Blueprint("back", __name__, url_prefix="/api")
+app = Blueprint("back", __name__, url_prefix="/m/api")
 
 from datetime import datetime, timedelta
 import dotenv
